@@ -122,6 +122,8 @@ local function installPackage(address) -- install packages, recursive stuff
     return false
   end
   
+  
+  
   if type(pkg.files) == "table" then
     for path, url in pairs(pkg.files) do
       local ok, err = wget(url, path)
@@ -129,10 +131,9 @@ local function installPackage(address) -- install packages, recursive stuff
         printError("Cannot fetch " .. url .. ": " .. err)
       end
     end
-    
-    cget.packages[address] = pkg
-    
   end
+  
+  cget.packages[address] = pkg
   
   if type(pkg.dependencies) == "table" then
     for _, dAddr in ipairs(pkg.dependencies) do
