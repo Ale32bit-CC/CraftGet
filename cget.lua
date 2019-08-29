@@ -5,7 +5,7 @@
 ]]--
 
 local cget = {
-  _VERSION = "0.0.3",
+  _VERSION = "0.0.4",
   _AUTHORS = {
     "Ale32bit",
   },
@@ -99,6 +99,10 @@ for line in io.lines(cget.sourcesPath) do
     table.insert(cget.sources, line)
   end
 end
+
+if not fs.exists(cget.binDir) then
+    fs.makeDir(cget.binDir)
+  end
 
 local json = dofile(fs.combine(cget.BASE_DIR, "json.lua"))
 
@@ -221,6 +225,7 @@ local function install(...)
   requestedPackages["-y"] = nil
   
   local packages = {}
+  local willInstall = {}
   
   for name in pairs(requestedPackages) do
     local possibilities = {}
@@ -262,12 +267,18 @@ local function install(...)
     
     if pkg then
       table.insert(packages, pkg.meta.address)
+      table.insert(willInstall, pkg.meta.name .. "@" .. pkg.version or "1.0.0")
     end
+  end
+  
+  if #packages == 0 then
+    print("No packages found")
+    return
   end
   
   if not forceYes then
     print("The following packages will be installed: ")
-    print(" - " .. table.concat(packages, ", "))
+    print(" - " .. table.concat(willInstall, ", "))
     print("Press ENTER to continue")
     repeat
       local _, key = os.pullEvent("key")
@@ -277,6 +288,8 @@ local function install(...)
   for _, pkg in ipairs(packages) do
     installPackage(pkg)
   end
+  
+  print("Installed " .. #packages .. " packages")
 end
 
 local function remove(...)
@@ -333,6 +346,11 @@ local function remove(...)
     end
   end
   
+  if #packages == 0 then
+    print("No packages found")
+    return
+  end
+  
   if not forceYes then
     print("The following packages will be removed: ")
     print(" - " .. table.concat(packages, ", "))
@@ -354,7 +372,7 @@ local function remove(...)
     end
   end
   
-  print("Removed packages")
+  print("Removed " .. #packages .. " packages")
 end
 
 local function upgrade()
@@ -370,12 +388,17 @@ local function upgrade()
 end
 
 local function setup()
-  print("Setting up...")
-  if not fs.exists(cget.binDir) then
-    fs.makeDir(cget.binDir)
-    print("Created binary folder " .. cget.binDir)
-  end
   
+  print("A startup file will be created")
+  print("If there is an already existing startup script, it will be moved to the folder startup/")
+  print("\n! This step is necessary to utilise some packages that may install into /bin/ !")
+  print("Press ENTER to continue")
+  repeat
+    local _, k = os.pullEvent("key")
+  until k == keys.enter
+
+  print("Setting up...")
+   
   local function makeStartup()
     local f = fs.open("/startup/00_cget.lua", "w")
     f.write(STARTUP)
@@ -400,7 +423,7 @@ local function setup()
   end
   load(STARTUP, "=cget", "t", _ENV)()
   
-  print("Integrated")
+  print("Done")
 end
 
 local args = {...}
