@@ -5,7 +5,7 @@
 ]]--
 
 local cget = {
-  _VERSION = "0.0.4",
+  _VERSION = "0.0.5",
   _AUTHORS = {
     "Ale32bit",
   },
@@ -114,11 +114,11 @@ local function getPackage(address)
   end
 end
 
-local function installPackage(address) -- install packages, recursive stuff
+local function installPackage(address, force) -- install packages, recursive stuff
 
   local pkg = getPackage(address)
   
-  if cget.packages[address] then
+  if not force and cget.packages[address] then
     if cget.packages[address].version == pkg.version then
       return true
     end
@@ -286,7 +286,7 @@ local function install(...)
   end
   
   for _, pkg in ipairs(packages) do
-    installPackage(pkg)
+    installPackage(pkg, true)
   end
   
   print("Installed " .. #packages .. " packages")
@@ -387,12 +387,27 @@ local function upgrade()
   print("Upgraded " .. u .. " packages")
 end
 
+local function list()
+  local list = {}
+  
+  for i, pkg in ipairs(cget.cache) do
+    table.insert(list, string.format("%d. %s @ %s", i, pkg.meta.address, pkg.version))
+  end
+  
+  textutils.pagedTabulate(list)
+end
+
+local function editSources()
+  shell.run("/rom/programs/edit.lua /.craftget/sources")
+end
+
 local function setup()
   
   print("A startup file will be created")
   print("If there is an already existing startup script, it will be moved to the folder startup/")
   print("\n! This step is necessary to utilise some packages that may install into /bin/ !")
   print("Press ENTER to continue")
+  print("Hold CTRL+T to terminate")
   repeat
     local _, k = os.pullEvent("key")
   until k == keys.enter
@@ -429,46 +444,34 @@ end
 local args = {...}
 
 local commands = {
-  update = {
-    update,
-    "- Update packages list from sources",
-  },
-  install = {
-    install,
-    "<package>... - Install packages"
-  },
-  remove = {
-    remove,
-    "<package>... - Remove packages"
-  },
-  upgrade = {
-    upgrade,
-    "- Upgrade installed packages"
-  },
-  setup = {
-    setup,
-    "- Setup integration with shell"
-  },
+  {"update", update, "- Update packages list from sources"},
+  {"install", install, "<package>... - Install packages"},
+  {"upgrade", upgrade, "- Upgrade installed packages"},
+  {"remove", remove, "<package>... - Remove packages"},
+  {"list", list, "- List packages in cache"},
+  {"edit-sources", editSources, "- Edit sources file"},
+  {"setup", setup, "- Setup integration with shell"},
 }
 
 print("CraftGet " .. cget._VERSION)
 
 if #args < 1 then
-  print("Usage:")
-  for name, cmd in pairs(commands) do
-    print("cget " .. name .. " " .. (cmd[2] or "[No usage specified]"))
+  print("Usage: cget <command> [args[, ...]]")
+  print("Available commands:")
+  for i, cmd in ipairs(commands) do
+    print("- " .. cmd[1] .. " " .. (cmd[3] or "[No usage specified]"))
   end
   return
 end
 
-if not commands[args[1]] then
-  print("Command not found")
-  return
+for i, cmd in ipairs(commands) do
+    if cmd[1] == args[1] then
+      local cmdArgs = {}
+      for i = 2, #args do
+        table.insert(cmdArgs, args[i])
+      end
+      cmd[2](unpack(cmdArgs))
+      return
+    end
 end
-
-local cmdArgs = {}
-for i = 2, #args do
-  table.insert(cmdArgs, args[i])
-end
-
-commands[args[1]][1](unpack(cmdArgs))
+print("Command not found")
