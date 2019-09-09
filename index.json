@@ -1,4 +1,5 @@
 {
   "ale32bit": "https://raw.githubusercontent.com/Ale32bit-CC/cget-packages/master/index.json",
-  "osmarks": "https://pastebin.com/raw/g80Uetq0"
+  "osmarks": "https://pastebin.com/raw/g80Uetq0",
+  "notpol": "https://raw.githubusercontent.com/notpol/cget-packages/master/index.json"
 }
