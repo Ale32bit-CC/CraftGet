@@ -407,7 +407,7 @@ end
 local args = {...}
 
 local commands = {
-  {"sync", update, "- Update packages list from sources"},
+  {"sync", sync, "- Update packages list from sources"},
   {"install", install, "<package>... - Install packages"},
   {"remove", remove, "<package>... - Remove packages"},
   {"list", list, "- List packages in cache"},
